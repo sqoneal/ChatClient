@@ -51,6 +51,7 @@ public class MyAdapter extends BaseAdapter {
                 vh = new ViewHolder();
                 vh.mimageView = (ImageView) convertView.findViewById(R.id.imageview1);
                 vh.mtextView = (TextView) convertView.findViewById(R.id.textview1);
+                vh.mtextView.setMaxWidth(300);
                 convertView.setTag(vh);
             } else {
                 vh = (ViewHolder) convertView.getTag();
@@ -61,6 +62,7 @@ public class MyAdapter extends BaseAdapter {
                 vh = new ViewHolder();
                 vh.mimageView = (ImageView) convertView.findViewById(R.id.imageview2);
                 vh.mtextView = (TextView) convertView.findViewById(R.id.textview2);
+                vh.mtextView.setMaxWidth(300);
                 convertView.setTag(vh);
             } else {
                 vh = (ViewHolder) convertView.getTag();

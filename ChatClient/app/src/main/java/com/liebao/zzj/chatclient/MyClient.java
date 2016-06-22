@@ -19,19 +19,24 @@ import java.net.Socket;
 
 public class MyClient {
 
-    // private BufferedReader br;
     private DataOutputStream dos;
     private DataInputStream dis;
-    private Socket socket;
+    public Socket socket;
     public String messagestr;
     //public boolean flag = true; // 用于控制循环结束
+
+    InputStreamReader isr;
 
     public MyClient() {
         try {
             //this.br = new BufferedReader(new InputStreamReader(System.in)); // 用于从控制台接受输入的信息，再发送到服务器
             this.socket = new Socket("192.168.31.209", 8899);
             this.dos = new DataOutputStream(socket.getOutputStream()); // 向服务器写数据的输出流
-            this.dis = new DataInputStream(socket.getInputStream()); // 获取服务器返回数据的输入流
+            //this.dis = new DataInputStream(socket.getInputStream()); // 获取服务器返回数据的输入流
+
+            isr = new InputStreamReader(socket.getInputStream());
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -39,8 +44,12 @@ public class MyClient {
 
     public void receivemessage(Handler handler) {
         while (this.socket.isConnected()) {
+            if (this.socket.isClosed())
+                break;
             try {
                 while ((messagestr = this.dis.readUTF()) != null) {
+                /*while (isr.read() != -1) {
+                    messagestr = isr.toString();*/
                     Message message = new Message();
                     message.what = MainActivity.RECIEVEMESSAGE;
                     Bundle b = new Bundle();
@@ -55,31 +64,33 @@ public class MyClient {
     }
 
     public void sendmessage(String str) {
-        if (this.socket.isConnected()) {
-            try {
-                //str = "from client:" + br.readLine();
-                if ("exit".equals(str)) { // 客户端终止发送信息标记 exit
-                    //this.br.close();
-                    this.dos.writeUTF(str);
-                    this.dos.flush();
+        if (!this.socket.isClosed()) {
+            if (this.socket.isConnected()) {
+                try {
+                    //str = "from client:" + br.readLine();
+                    if ("exit".equals(str)) { // 客户端终止发送信息标记 exit
+                        //this.br.close();
+                        this.dos.writeUTF(str);
+                        this.dos.flush();
 
-                    String res = dis.readUTF();
-                    System.out.println(res);
+                        String res = dis.readUTF();
+                        System.out.println(res);
 
-                    this.dis.close();
-                    this.dos.close();
-                    //this.flag = false;
-                } else {
-                    this.dos.writeUTF(str);// 每读一行就发送一行
-                    this.dos.flush();
+                        this.dis.close();
+                        this.dos.close();
+                        //this.flag = false;
+                    } else {
+                        this.dos.writeUTF(str);// 每读一行就发送一行
+                        this.dos.flush();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
 
-    public void uninit(){
+    public void uninit() {
         try {
             this.dis.close();
             this.dos.close();

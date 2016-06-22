@@ -33,8 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private Socket socket = null;
 
     public static final int RECIEVEMESSAGE = 1001;
+    public static final int SETBUTTONSTATE = 1002;
+    public static final int RESETETMESSAGE = 1003;
     MyClient myClient;
-
 
     private Handler handler = new Handler() {
         @Override
@@ -42,9 +43,16 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what) {
                 case RECIEVEMESSAGE:
                     Bundle bundle = msg.getData();
-                    mData.add(mData.size(),bundle.getString("msg"));
+                    mData.add(mData.size(), bundle.getString("msg"));
                     lvmessage.setAdapter(myAdapter);
-                    lvmessage.setSelection(mData.size()-1);
+                    lvmessage.setSelection(mData.size() - 1);
+                    break;
+                case SETBUTTONSTATE:
+                    btconnect.setEnabled(false);
+                    btsend.setEnabled(true);
+                    break;
+                case RESETETMESSAGE:
+                    etmessage.setText("");
                     break;
                 default:
                     break;
@@ -63,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         etip = (EditText) findViewById(R.id.et_ip);
         etmessage = (EditText) findViewById(R.id.et_message);
 
-        myAdapter = new MyAdapter(this,mData);
+        myAdapter = new MyAdapter(this, mData);
         lvmessage.setAdapter(myAdapter);
 
         btconnect.setOnClickListener(new View.OnClickListener() {
@@ -72,10 +80,20 @@ public class MainActivity extends AppCompatActivity {
                 //new myChatThread().start();
                 new Thread(new Runnable() {
                     @Override
-                    public void run() {
-                        if(myClient == null) {
+                    public synchronized void run() {
+                        if (myClient == null) {
                             MyClient myClient1 = new MyClient();
                             myClient = myClient1;
+                        }
+                        try {
+                            wait(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        if (myClient.socket.isConnected()) {
+                            Message msg = new Message();
+                            msg.what = SETBUTTONSTATE;
+                            handler.sendMessage(msg);
                             myClient.receivemessage(handler);
                         }
                     }
@@ -84,13 +102,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btsend.setOnClickListener(new View.OnClickListener() {
+            Message msg = new Message();
             @Override
             public void onClick(View v) {
                 //new myChatThread().start();
                 new Thread(new Runnable() {
                     @Override
-                    public void run() {
+                    public synchronized void run() {
                         myClient.sendmessage(etmessage.getText().toString());
+                        msg.what = RESETETMESSAGE;
+                        handler.sendMessage(msg);
                     }
                 }).start();
             }
